@@ -5,7 +5,7 @@
 
 typedef struct
 {
-	void * start;
+	void * map;
 	int size;	
 } hash;
 

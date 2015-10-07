@@ -2,7 +2,8 @@
 #include <stdio.h>
 
 
-// This is the struct for each cell in a map.
+// hash_cell is the struct for each cell in a map.
+// This struct is not stored in the header to prevent outside access
 // The key for indexing, and the desired data.
 // Status is the enum below, and can either be empty, full, or was_used.
 
@@ -29,21 +30,21 @@ hash * construct_hash(int size)
 	else if(size == 0)
 	{
 		new_hash->size = 0;
-		new_hash->start = 0;
+		new_hash->map = 0;
 		return new_hash;
 	}
 
 	new_hash->size = size;
 
 	hash_cell * map = malloc(sizeof(hash_cell) * size);
-	new_hash->start = (void *)map;
+	new_hash->map = (void *)map;
 
 	//iterate through the whole map and set initial values
 	for(int i = 0; i < size; ++i)
 	{
-		map[i].key = 0;
-		map[i].datum = 0;
-		map[i].status = EMPTY;
+		((hash_cell *)new_hash->map)[i].key = 0;
+		((hash_cell *)new_hash->map)[i].datum = 0;
+		((hash_cell *)new_hash->map)[i].status = EMPTY;
 	}
 
 	return new_hash;
@@ -52,7 +53,25 @@ hash * construct_hash(int size)
 // Necessary for manual memory management
 void delete_hash(hash * hash_map)
 {
+	// free up the map, in reverse order
+	// TODO: Not sure how to deal with clean-up of objects in map yet
+	// Re, above: just kidding. Memory system keeps track of allocations.
+	// If there's an allocation at that address, memory system knows the size.
+	for(int i = hash_map->size - 1; i >= 0; --i)
+	{
+		free(((hash_cell *)hash_map->map)[i].key);
+		free(((hash_cell *)hash_map->map)[i].datum);
+		// this code below pointless because free(hash_map->map) handles arrays
+		//free(&(((hash_cell *)hash_map->map)[i]));
+	}
 
+	free(hash_map->map);
+	hash_map->map = 0;
+
+	// free up the hash_map struct itself
+
+	free(hash_map);
+	hash_map = 0;
 }
 
 // Couldn't use 'bool', due to no such type existing in C

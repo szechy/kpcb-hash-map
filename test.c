@@ -12,9 +12,14 @@ int main(int argc, char const *argv[])
 
   // Run some tests. Relying on assertions to find test failures.
   /* *** CONSTRUCT TESTS *** */
+    run_test(construct_size_neg_one, construct_size_neg_one_desc);
+    run_test(construct_size_zero, construct_size_zero_desc);
     run_test(construct_size_one, construct_size_one_desc);
+    run_test(construct_size_ten, construct_size_ten_desc);
     run_test(construct_size_one_kb, construct_size_one_kb_desc);
     run_test(construct_size_one_mb, construct_size_one_mb_desc);
+
+    /* *** SET TESTS *** */
 
   // End the suite
     end_suite();

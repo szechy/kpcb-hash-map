@@ -29,6 +29,9 @@ int construct_size_zero()
 
     // Check reported size
     assert(obj->size == 0);
+
+    // Clean up hash
+    delete_hash(obj);
     return 1;
 }
 
@@ -44,10 +47,33 @@ int construct_size_one()
 
     // Check reported size
     assert(obj->size == 1);
+
+    // Clean up hash
+    delete_hash(obj);
+
     return 1;
 }
 
-/* Make a hash map of 1,000 objects. This is a conventional usage case.
+/* Make a hash map of size 1. This is a small conventional use case.
+ * BEHAVIOR: Return pointer to hash struct with size 1
+ */
+int construct_size_ten()
+{
+    hash * obj = construct_hash(10);
+
+    // null check
+    assert(obj != 0);
+
+    // Check reported size
+    assert(obj->size == 10);
+
+    // Clean up hash
+    delete_hash(obj);
+
+    return 1;
+}
+
+/* Make a hash map of 1,000 objects. This is a conventional use case.
  * BEHAVIOR: Return pointer to hash struct with size 1KB
  */
 int construct_size_one_kb()
@@ -59,6 +85,10 @@ int construct_size_one_kb()
 
     // Check reported size
     assert(obj->size == 1000);
+
+    // Clean up hash
+    delete_hash(obj);
+
     return 1;
 }
 
@@ -75,5 +105,9 @@ int construct_size_one_mb()
 
     // Check reported size
     assert(obj->size == 1000000);
+
+    // Clean up hash
+    delete_hash(obj);
+
     return 1;
 }
