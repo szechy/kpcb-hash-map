@@ -3,12 +3,12 @@ CFLAGS += -O1 -g -Wall
 
 all: shell test
 
-%.o: %.c $(DEPS)
+%.o: %.c
 	$(CC) -c -o $@ $< $(CFLAGS)
 
 shell: hash.o shell.o
 
-test: hash.o test.o
+test: hash.o test-cases.o unit-test-framework/unit_test_framework.o
 
 clean:
-	rm -rf *.o *.dSYM shell test
+	rm -rf *.o unit-test-framework/*.o *.dSYM shell test hash
