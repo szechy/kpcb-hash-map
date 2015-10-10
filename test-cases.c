@@ -1,5 +1,6 @@
 #include "hash.h"
 #include "stdio.h"
+#include "stdlib.h"
 // I'd really like to write my own version of assert that could somehow provide
 // more diagnostic info, maybe another time
 #include <assert.h>
@@ -108,6 +109,141 @@ int construct_size_one_mb()
 
     // Clean up hash
     delete_hash(obj);
+
+    return 1;
+}
+
+/* Fill a hash map of size 1, with one key-value pair. Conventional use case.
+ * BEHAVIOR: Return 1, with successful set
+ */
+ int set_one()
+ {
+    hash * obj = construct_hash(1);
+    int j = 5;
+
+    // Check that function reports it was placed
+    assert(set(obj, "Test", (void *)&j));
+
+    // Check that value actually exists in hash map
+    //printf("%d\n", (int *)retrieveLocation(obj, 0));
+    assert(*(int *)retrieveLocation(obj, 0) == 5);
+    return 1;
+ }
+
+/* Fill a hash map of size 5, with 5 key-value pairs. No collisions. 
+ * Conventional use case.
+ * BEHAVIOR: Return 1, with successful set
+ */
+ int set_five()
+ {
+    hash * obj = construct_hash(5);
+    int a = 1, b = 2, c = 3, d = 4, e = 5;
+
+    // Check that function reports it was placed
+    // Keys chosen because they hash to different locations with no collisions
+    assert(set(obj, "Test1", (void *)&a));
+    assert(set(obj, "Test2", (void *)&b));
+    assert(set(obj, "Test3", (void *)&c));
+    assert(set(obj, "Test4", (void *)&d));
+    assert(set(obj, "Test5", (void *)&e));
+
+    // Check that value actually exists in hash map at proper location
+    printf("%d\n", *(int *)retrieveLocation(obj, 0));
+    assert(*(int *)retrieveLocation(obj, 0) == 1);
+    assert(*(int *)retrieveLocation(obj, 1) == 2);
+    assert(*(int *)retrieveLocation(obj, 2) == 3);
+    assert(*(int *)retrieveLocation(obj, 3) == 4);
+    assert(*(int *)retrieveLocation(obj, 4) == 5);
+    return 1;
+ }
+
+/* Fill a hash map of size 5, with 5 key-value pairs. Two collisions. 
+ * Conventional use case.
+ * BEHAVIOR: Return 1, with successful set
+ */
+ int set_five_with_colls()
+ {
+    hash * obj = construct_hash(5);
+    int a = 1, b = 2, c = 3, d = 4, e = 5;
+
+    // Check that function reports it was placed
+    // Keys chosen because they hash to different locations with no collisions
+    assert(set(obj, "Test", (void *)&a));   // hashes to 1
+    assert(set(obj, "Test2", (void *)&b));  // hashes to 1, collides
+    assert(set(obj, "Test12", (void *)&c)); // hashes to 0
+    assert(set(obj, "Test5", (void *)&d));  // hashes to 4
+    assert(set(obj, "Test25", (void *)&e)); // hashes to 4, collides
+
+    // Check that value actually exists in hash map
+    //printf("%d\n", (int *)retrieveLocation(obj, 0));
+    assert(*(int *)retrieveLocation(obj, 1) == 1);
+    assert(*(int *)retrieveLocation(obj, 2) == 2);
+    assert(*(int *)retrieveLocation(obj, 0) == 3);
+    assert(*(int *)retrieveLocation(obj, 4) == 4);
+    assert(*(int *)retrieveLocation(obj, 3) == 5);
+    return 1;
+ }
+
+/* Fill a hash map of size 10, with 10 key-value pairs. 
+ * Seven sets have at least one collision. Conventional use case.
+ * BEHAVIOR: Return 1, with successful set
+ */
+ int set_ten_with_colls()
+ {
+    hash * obj = construct_hash(10);
+    int a = 1, b = 2, c = 3, d = 4, e = 5, f = 6, g = 7, h = 8, i = 9, j = 10;
+
+    // Check that function reports it was placed
+    // Keys chosen because they hash to different locations with no collisions
+    assert(set(obj, "Test", (void *)&a));   // hashes to 6
+    assert(set(obj, "Test2", (void *)&b));  // hashes to 6, coll to 7
+    assert(set(obj, "Test12", (void *)&c)); // hashes to 0
+    assert(set(obj, "Test5", (void *)&d));  // hashes to 9
+    assert(set(obj, "Test25", (void *)&e)); // hashes to 9, to 0, 3
+    assert(set(obj, "Test50", (void *)&f)); // hashes to 2
+    assert(set(obj, "Test32", (void *)&g)); // hashes to 2, to 3, 6, 1
+    assert(set(obj, "Test63", (void *)&h)); // hashes to 1, to 2, 5
+    // Looking at the sheer number of collisions for the set below is real-life
+    // evidence to me that prime-number-sized hash maps are important!
+    assert(set(obj, "Test27", (void *)&i)); // hashes to 1, lots of colls to 4
+    assert(set(obj, "Test42", (void *)&j)); // hashes to 8
+
+
+    // Check that value actually exists in hash map
+    //printf("%d\n", (int *)retrieveLocation(obj, 0));
+    assert(*(int *)retrieveLocation(obj, 6) == 1);
+    assert(*(int *)retrieveLocation(obj, 7) == 2);
+    assert(*(int *)retrieveLocation(obj, 0) == 3);
+    assert(*(int *)retrieveLocation(obj, 9) == 4);
+    assert(*(int *)retrieveLocation(obj, 3) == 5);
+    assert(*(int *)retrieveLocation(obj, 2) == 6);
+    assert(*(int *)retrieveLocation(obj, 1) == 7);
+    assert(*(int *)retrieveLocation(obj, 5) == 8);
+    assert(*(int *)retrieveLocation(obj, 4) == 9);
+    assert(*(int *)retrieveLocation(obj, 8) == 10);    
+    return 1;
+ }
+
+/* Fill a hash map of size 1,000,000, with 100,000 key-value pairs. 
+ * Likely to be a lot of collisions.
+ * BEHAVIOR: Return 1, with successful set
+ */
+ int set_million()
+ {
+    hash * obj = construct_hash(1000000);
+
+    int i = 100000;
+    int * number;
+    char string[50];
+    for(; i >= 0; i--)
+    {
+        // generate new string
+        sprintf(string, "Test%d", i);
+        // generate new int
+        number = (int *) malloc(sizeof(int));
+        *number = rand();
+        assert(set(obj, string, (void *)number));
+    }
 
     return 1;
 }

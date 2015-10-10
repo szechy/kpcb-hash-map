@@ -20,6 +20,11 @@ int main(int argc, char const *argv[])
     run_test(construct_size_one_mb, construct_size_one_mb_desc);
 
     /* *** SET TESTS *** */
+    run_test(set_one, set_one_desc);
+    run_test(set_five, set_five_desc);
+    run_test(set_five_with_colls, set_five_with_colls_desc);
+    run_test(set_ten_with_colls, set_ten_with_colls_desc);
+    run_test(set_million, set_million_desc);
 
   // End the suite
     end_suite();
