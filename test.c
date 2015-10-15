@@ -30,8 +30,8 @@ int main(int argc, char const *argv[])
     run_test(get_one, get_one_desc);
     run_test(get_one_fail, get_one_fail_desc);
     run_test(get_ten, get_ten_desc);
-    //run_test(get_thousand, get_thousand_desc);
-    //run_test(get_million, get_million_desc);
+    run_test(get_thousand, get_thousand_desc);
+    run_test(get_million, get_million_desc);
 
   // End the suite
     end_suite();

@@ -92,6 +92,9 @@ void delete_hash(hash * hash_map)
 // indicating success / failure of the operation.
 int set(hash * hash_map, const char * key, void * element)
 {
+	// TODO: check if hash is already in map, and return failure
+	// TODO: attempt to simplify by sharing functions with get_index()
+
 	// if the map is full, don't bother - and report we're full
 	if(hash_map->in_use == hash_map->size)
 		return 0;
@@ -102,6 +105,11 @@ int set(hash * hash_map, const char * key, void * element)
 	
 	hash_cell * map = hash_map->map;
 
+	// following comment has been extremely useful for debugging
+	printf("Original loc: %d, for %d\n", hash_mod, *(int *)element);
+
+	char * visited = malloc(hash_map->size*sizeof(char));
+
 	if(map[hash_mod].status != FULL)
 	{
 		// set it into the spot
@@ -110,14 +118,17 @@ int set(hash * hash_map, const char * key, void * element)
 		map[hash_mod].status = FULL;		
 	}
 	// Collision resolution!
-	// We're going to try quadratic probing - look 1, 4, 9 spaces away
+	// We're going to try quadratic probing - look 1, 4, 9, n^2 spaces away
 	// from original hash
 	else
 	{
-		int found = 0, number = 1, new_location = hash_mod;
-		while(!found)
+		visited[hash_mod] = 1;	
+		int num_visited = 1, number = 1, new_location = hash_mod;
+		while(num_visited != hash_map->size)
 		{
 			new_location = (hash_mod + number*number) % hash_map->size;
+			// following comment has been extremely useful for debugging
+			 printf("New loc: %d, for %d, checked %d places\n", new_location, *(int *)element, num_visited);			
 			if(map[new_location].status != FULL)
 			{
 			// set it into the spot
@@ -126,9 +137,19 @@ int set(hash * hash_map, const char * key, void * element)
 				map[new_location].status = FULL;						
 			// mark we've found it, 
 			// otherwise we'll keep checking with our new value of 'number'
-				found = 1;
+				//found = 1;
+				return 1;
 			}
+			// Check if this is the same item
+			else if((map[new_location].status == FULL)
+				&& (map[new_location].hashed_key == hash_original))
+				return 0;
 			number++;
+			if(visited[new_location] == 0)
+			{
+				num_visited++;
+				visited[new_location] = 1;
+			}
 		}
 	}
 
@@ -156,7 +177,21 @@ void * get(hash * hash_map, const char * key)
 // success or null if the key has no value.
 void * delete(hash * hash_map, const char * key)
 {
-	return 0;
+	// Retrieve index of hash, if it exists.
+	int index = get_index(hash_map, key);
+
+	// Mark out the hash cell, and set to null if it exists
+	if(index > -1)
+	{
+		void * datum = ((hash_cell *)hash_map->map)[index].datum;
+		((hash_cell *)hash_map->map)[index].datum = 0;
+		((hash_cell *)hash_map->map)[index].hashed_key = 0;
+		((hash_cell *)hash_map->map)[index].status = WAS_USED;
+		return datum;
+	}
+	// if index == -1, return null
+	else
+		return 0;
 }
 
 // Return a float value representing the load factor 
@@ -237,7 +272,7 @@ unsigned long ElfHash(const char *s)
 	{
 		h = (h<<4) + *s++;
 	}
-	if(high = h & 0xF00000000)
+	if(high = (h & 0xF00000000))
 		h ^= high >> 24;
 	h &= ~high;
 	return h;

@@ -148,7 +148,6 @@ int construct_size_one_mb()
     assert(set(obj, "Test5", (void *)&e));
 
     // Check that value actually exists in hash map at proper location
-    printf("%d\n", *(int *)retrieveLocation(obj, 0));
     assert(*(int *)retrieveLocation(obj, 0) == 1);
     assert(*(int *)retrieveLocation(obj, 1) == 2);
     assert(*(int *)retrieveLocation(obj, 2) == 3);
@@ -168,14 +167,13 @@ int construct_size_one_mb()
 
     // Check that function reports it was placed
     // Keys chosen because they hash to different locations with no collisions
-    assert(set(obj, "Test", (void *)&a));   // hashes to 1
+    assert(set(obj, "Test7", (void *)&a));   // hashes to 1
     assert(set(obj, "Test2", (void *)&b));  // hashes to 1, collides
     assert(set(obj, "Test12", (void *)&c)); // hashes to 0
-    assert(set(obj, "Test5", (void *)&d));  // hashes to 4
+    assert(set(obj, "Test500", (void *)&d));  // hashes to 4
     assert(set(obj, "Test25", (void *)&e)); // hashes to 4, collides
 
     // Check that value actually exists in hash map
-    //printf("%d\n", (int *)retrieveLocation(obj, 0));
     assert(*(int *)retrieveLocation(obj, 1) == 1);
     assert(*(int *)retrieveLocation(obj, 2) == 2);
     assert(*(int *)retrieveLocation(obj, 0) == 3);
@@ -317,14 +315,76 @@ int get_one()
     return 1;
  }
 
-/* Retrieve 1000 values perfectly, and fail on 10.
- * Behavior: Successfully retrieve 1000, fail on five
+/* Retrieve 1,000 values perfectly, and fail on 1,000.
+ * Behavior: Successfully retrieve 1,000 - fail on 1,000
  */
 int get_thousand()
 {
     hash * obj = construct_hash(1000);
 
     int i = 999;
-    
+    int * number;
+    char string[50];
+    for(; i >= 0; i--)
+    {
+        // generate new string
+        sprintf(string, "Test%d", i);
+        // generate new int
+        number = (int *) malloc(sizeof(int));
+        *number = i;
+        assert(set(obj, string, (void *)number));
+        sprintf(string, "Test%d\n", i);
+        printf(string);
+    }
 
+       // find valid values
+    for(i = 0; i < 1000; i++)
+    {
+        // generate new string
+        sprintf(string, "Test%d", i);
+        // generate new int
+        assert(*(int *)get(obj, string) == i);
+        // generate ranodm string guaranteed to fail
+        sprintf(string, "DifferentTest%d", i);
+        // check it fails
+        assert(get(obj, string) == 0);
+    }
+
+    return 1;
+}
+
+/* Retrieve 1,000 values perfectly, and fail on 1,000.
+ * Behavior: Successfully retrieve 1,000, fail on 1,000
+ */
+int get_million()
+{
+    hash * obj = construct_hash(1000000);
+
+    int i = 999999;
+    int * number;
+    char string[50];
+    for(; i >= 0; i--)
+    {
+        // generate new string
+        sprintf(string, "Test%d", i);
+        // generate new int
+        number = (int *) malloc(sizeof(int));
+        *number = i;
+        assert(set(obj, string, (void *)number));
+    }
+
+       // find valid values
+    for(i = 0; i < 1000000; i++)
+    {
+        // generate new string
+        sprintf(string, "Test%d", i);
+        // generate new int
+        assert(*(int *)get(obj, string) == i);
+        // generate ranodm string guaranteed to fail
+        sprintf(string, "Test%d", 4*i);
+        // check it fails
+        assert(get(obj, string) == 0);
+    }
+     
+    return 1;
 }
