@@ -225,7 +225,7 @@ int construct_size_one_mb()
  }
 
 /* Fill a hash map of size 1,000,000, with 100,000 key-value pairs. 
- * Likely to be a lot of collisions.
+ * Likely to be a lot of collisions. Stress test case.
  * BEHAVIOR: Return 1, with successful set
  */
  int set_million()
@@ -246,4 +246,85 @@ int construct_size_one_mb()
     }
 
     return 1;
+}
+
+/* Retrieve one value from a hash map - conventional use case.
+ * BEHAVIOR: Return 1, with successful retrieval
+ */
+int get_one()
+{
+    hash * obj = construct_hash(10);
+    int * number = malloc(sizeof(int));
+    *number = 15;
+    assert(set(obj, "TestKey", (void *)number));
+
+    assert(*(int *)get(obj, "TestKey") == *number);
+
+    return 1;
+}
+
+/* Fail to retrieve one value from a hash map, because no keys map there
+ * BEHAVIOR: get() returns nullptr, with unsuccessful retrieval
+ */
+ int get_one_fail()
+ {
+    hash * obj = construct_hash(10);
+
+    int * number = malloc(sizeof(int));
+    *number = 27;
+    assert(set(obj, "TestKey", (void *) number));
+    assert(get(obj, "DifferentKey") == 0);
+
+    return 1;
+ }
+
+/* Retrieve ten values properly, and five values failing
+ * BEHAVIOR: Successfully retrieve ten, and fail to retrieve five
+ */
+ int get_ten()
+ {
+    hash * obj = construct_hash(10);
+
+    int i = 9;
+    int * number;
+    char string[50];
+    for(; i >= 0; i--)
+    {
+        // generate new string
+        sprintf(string, "Test%d", i);
+        // generate new int
+        number = (int *) malloc(sizeof(int));
+        *number = i;
+        assert(set(obj, string, (void *)number));
+    }
+
+    // find valid values
+    for(i = 0; i < 10; i++)
+    {
+        // generate new string
+        sprintf(string, "Test%d", i);
+        // generate new int
+        assert(*(int *)get(obj, string) == i);
+    }
+
+    // fail on finding five
+    assert(get(obj, "Test11") == 0);
+    assert(get(obj, "Test12") == 0);
+    assert(get(obj, "Test21") == 0);
+    assert(get(obj, "Test23") == 0);
+    assert(get(obj, "Test42") == 0);
+
+    return 1;
+ }
+
+/* Retrieve 1000 values perfectly, and fail on 10.
+ * Behavior: Successfully retrieve 1000, fail on five
+ */
+int get_thousand()
+{
+    hash * obj = construct_hash(1000);
+
+    int i = 999;
+    
+
 }

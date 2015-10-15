@@ -30,6 +30,16 @@ static const char * set_million_desc = "Fill hash map of size 1,000,000 with 100
 int set_million();
 
 /* get(key, value) test cases */
+static const char * get_one_desc = "Retrieve one value from hash map";
+int get_one();
+static const char * get_one_fail_desc = "Fail to retrieve a value from hash map - invalid key";
+int get_one_fail();
+static const char * get_ten_desc = "Retrieve ten values from hash map";
+int get_ten();
+static const char * get_thousand_desc = "Retrieve 1000 values from hash map, alternate between fails and successes";
+int get_thousand();
+static const char * get_million_desc = "Retrieve 1,000,000 values from hash map, alternate between fails and successes";
+int get_million();
 
 /* delete(key, value) test cases */
 

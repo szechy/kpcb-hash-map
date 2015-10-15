@@ -15,9 +15,14 @@ typedef struct
 	cell_status status;
 } hash_cell;
 
-// Hash function from cstring to unsigned long.
+// Private hash function from cstring to unsigned long.
 // See function implementation for more detail.
 unsigned long ElfHash(const char *s);
+
+// Private function to simplify retrieving a hash in the map
+// Returns the datum's index, or -1.
+// Used get() and delete(), which then implements its own action
+int get_index(hash * hash_map, const char * key);
 
 // Return an instance of the class with pre-allocated space for the given 
 // number of objects. If size is negative, returns a nullptr.
@@ -139,14 +144,113 @@ int set(hash * hash_map, const char * key, void * element)
 // the other.
 void * get(hash * hash_map, const char * key)
 {
-	return 0;
+	// Compute hash, modulus the size of the map
+	/*unsigned long hash_original = ElfHash(key);
+	unsigned long hash_mod = hash_original % hash_map->size;
+
+	hash_cell * map = hash_map->map;
+	// Found it!
+	if((map[hash_mod].status == FULL) && 
+		(map[hash_mod].hashed_key == hash_original))
+		return map[hash_mod].datum;	
+	// Or, if nothing has ever existed here
+	else if(map[hash_mod].status == EMPTY)
+	{
+		return 0;
+	}
+
+	// go through collision resolution until reach empty cell
+	// unless we've explored the whole map...
+	// So keep track of the number of places we've visited, and if
+	// it matches the size of the map, stop. Use char as boolean for space.
+	char * visited = malloc(hash_map->size*sizeof(char));
+	int i = hash_map->size - 1;
+	for(; i >= 0; i--)
+	{
+		visited[i] = 0;
+	}
+	visited[hash_mod] = 1;
+	int num_visited = 1, number = 1, new_location = hash_mod;
+	while(num_visited != hash_map->size)
+	{
+		new_location = (hash_mod + number*number) % hash_map->size;
+		// if we've finally found an empty spot, stop
+		if(map[new_location].status == EMPTY)
+			return 0;
+		// If we've finally found what we're looking for, stop
+		else if((map[new_location].status == FULL) && 
+			(map[new_location].hashed_key == hash_original))
+			return map[new_location].datum;
+		// We haven't found what we're looking for, update info
+		if(!visited[new_location])
+		{
+			visited[new_location] = 1;
+			num_visited++;
+		}
+
+		number++;
+	}*/
+
+	int index = get_index(hash_map, key);
+	// send failure condition if not found
+	if(index == -1)
+		return 0;
+	else
+		return ((hash_cell *)hash_map->map)[index].datum;
 }
 
 // Delete the value associated with the given key, returning the value on 
 // success or null if the key has no value.
 void * delete(hash * hash_map, const char * key)
 {
-	hash_map->in_use--;
+	// look for the hash
+	/*unsigned long hash_original = ElfHash(key);
+	unsigned long hash_mod = hash_original % hash_map->size;
+
+	hash_cell * map = hash_map->map;
+
+	// Same procedure as get, except different ending: we'll remove an elt
+	// instead of finding an empty spot
+
+	// This time, we'll blend colliison resolution into checking the first spot,
+	// by setting the initial additional number to 0.
+	int num_visited = 0, number = 0, new_location = hash_mod;
+
+	char * visited = malloc(hash_map->size*sizeof(char));
+	int i = hash_map->size - 1;
+	for(; i >= 0; i--)
+	{
+		visited[i] = 0;
+	}
+	visited[hash_mod] = 1;	
+
+	// Only iterate until we've seen every bucket currently in use
+	while(num_visited != hash_map->in_use)
+	{
+		new_location = (hash_mod + number*number) % hash_map->size;
+
+		// Check hash, and remove if appropriate
+		if(map[new_location].status == FULL) && 
+			(map[new_location].hash == hash_original))
+		{
+			map[new_location].hashed_key = 0;
+			map[new_location].datum = 0;
+			map[new_location].status = WAS_USED;
+			// we'll use this to exit the loop
+			hash_map->in_use--;
+			return;
+		}
+		else if(map[new_location].status == FULL)
+		{
+			saw++;
+		}
+		// otherwise prepare for resolving collision
+		number++;
+	}
+
+	// If we break out of the for loop here, then we've seen every bucket in use
+	// and we can't find the element, so return null*/
+
 	return 0;
 }
 
@@ -157,6 +261,58 @@ float load(hash * hash_map)
 {
 	return 0;
 }
+
+int get_index(hash * hash_map, const char * key)
+{
+	unsigned long hash_original = ElfHash(key);
+	unsigned long hash_mod = hash_original % hash_map->size;
+
+	hash_cell * map = hash_map->map;
+	// Found it!
+	if((map[hash_mod].status == FULL) && 
+		(map[hash_mod].hashed_key == hash_original))
+		return hash_mod;
+		//return map[hash_mod].datum;	
+	// Or, if nothing has ever existed here
+	else if(map[hash_mod].status == EMPTY)
+	{
+		return -1;
+	}
+
+	// go through collision resolution until reach empty cell
+	// unless we've explored the whole map...
+	// So keep track of the number of places we've visited, and if
+	// it matches the size of the map, stop. Use char as boolean for space.
+	char * visited = malloc(hash_map->size*sizeof(char));
+	int i = hash_map->size - 1;
+	for(; i >= 0; i--)
+	{
+		visited[i] = 0;
+	}
+	visited[hash_mod] = 1;
+	int num_visited = 1, number = 1, new_location = hash_mod;
+	while(num_visited != hash_map->size)
+	{
+		new_location = (hash_mod + number*number) % hash_map->size;
+		// if we've finally found an empty spot, stop
+		if(map[new_location].status == EMPTY)
+			return -1;
+		// If we've finally found what we're looking for, stop
+		else if((map[new_location].status == FULL) && 
+			(map[new_location].hashed_key == hash_original))
+			return new_location;
+			//return map[new_location].datum;
+		// We haven't found what we're looking for, update info
+		if(!visited[new_location])
+		{
+			visited[new_location] = 1;
+			num_visited++;
+		}
+
+		number++;
+	}
+}
+
 
 // Direct copy of Wikipedia's explanation of the ELF hash, which is a variant
 // of the PJW hash. This is conventionally used for ELF files in Unix systems.
