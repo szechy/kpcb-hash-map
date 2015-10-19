@@ -41,6 +41,10 @@ void * delete(hash *, const char *);
 // the size of the dat structure is fixed, this should never be greater than 1.
 float load(hash *);
 
+int keyCollision(hash *, const char *);
+
+uint32_t SuperFastHash (const char * data, int len);
+
 // Returns specific element in the hash - only for testing
 void * retrieveLocation(hash *, int);
 

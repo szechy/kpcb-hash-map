@@ -1,5 +1,7 @@
 #include "hash.h"
+#include "cfarmhash.h"
 #include <stdio.h>
+#include <string.h>
 
 // hash_cell is the struct for each cell in a map.
 // This struct is not stored in the header to prevent outside access
@@ -17,12 +19,14 @@ typedef struct
 
 // Private hash function from cstring to unsigned long.
 // See function implementation for more detail.
+uint32_t SuperFastHash (const char * data, int len);
 unsigned long ElfHash(const char *s);
+
 
 // Private function to simplify retrieving a hash in the map
 // Returns the datum's index, or -1.
 // Used get() and delete(), which then implements its own action
-int get_index(hash * hash_map, const char * key);
+int get_index(hash * hash_map, const char * key, int looking_for_empty);
 
 // Return an instance of the class with pre-allocated space for the given 
 // number of objects. If size is negative, returns a nullptr.
@@ -100,61 +104,29 @@ int set(hash * hash_map, const char * key, void * element)
 		return 0;
 
 	// Compute hash, modulus the size of the map
-	unsigned long hash_original = ElfHash(key);
-	unsigned long hash_mod = hash_original % hash_map->size;
+	unsigned long hash_original = cfarmhash(key, strlen(key));
+	//unsigned long hash_original = SuperFastHash(key, strlen(key));
 	
-	hash_cell * map = hash_map->map;
+	//hash_cell * map = hash_map->map;
 
-	// following comment has been extremely useful for debugging
-	printf("Original loc: %d, for %d\n", hash_mod, *(int *)element);
+	//printf("DATA: %d\n", *(int *)element);
 
-	char * visited = malloc(hash_map->size*sizeof(char));
-
-	if(map[hash_mod].status != FULL)
+	int loc = get_index(hash_map, key, 1);
+	if(*(int *)element == 3105)
+		printf("3105: %d\n", loc);
+	if(*(int *)element == 67081)
+		printf("67081: %d\n", loc);
+	//printf("LOCATION FOUND: %d for %d\n", loc, *(int *)element);
+	if(loc != -1)
 	{
-		// set it into the spot
-		map[hash_mod].hashed_key = hash_original;
-		map[hash_mod].datum = element;
-		map[hash_mod].status = FULL;		
+		((hash_cell *)hash_map->map)[loc].hashed_key = hash_original;
+		((hash_cell *)hash_map->map)[loc].datum = element;		
+		((hash_cell *)hash_map->map)[loc].status = FULL;
+		hash_map->in_use++;
+		return 1;
 	}
-	// Collision resolution!
-	// We're going to try quadratic probing - look 1, 4, 9, n^2 spaces away
-	// from original hash
 	else
-	{
-		visited[hash_mod] = 1;	
-		int num_visited = 1, number = 1, new_location = hash_mod;
-		while(num_visited != hash_map->size)
-		{
-			new_location = (hash_mod + number*number) % hash_map->size;
-			// following comment has been extremely useful for debugging
-			 printf("New loc: %d, for %d, checked %d places\n", new_location, *(int *)element, num_visited);			
-			if(map[new_location].status != FULL)
-			{
-			// set it into the spot
-				map[new_location].hashed_key = hash_original;
-				map[new_location].datum = element;
-				map[new_location].status = FULL;						
-			// mark we've found it, 
-			// otherwise we'll keep checking with our new value of 'number'
-				//found = 1;
-				return 1;
-			}
-			// Check if this is the same item
-			else if((map[new_location].status == FULL)
-				&& (map[new_location].hashed_key == hash_original))
-				return 0;
-			number++;
-			if(visited[new_location] == 0)
-			{
-				num_visited++;
-				visited[new_location] = 1;
-			}
-		}
-	}
-
-	hash_map->in_use++;
-	return 1;
+		return 0;
 }
 
 // Return the value associated with the given key, or null if no value is set.
@@ -164,13 +136,20 @@ int set(hash * hash_map, const char * key, void * element)
 void * get(hash * hash_map, const char * key)
 {
 	// Retrieve index of hash, if it exists.
-	int index = get_index(hash_map, key);
+	int index = get_index(hash_map, key, 0);
 	// send failure condition if not found
+	//printf("INDEX: %d\n", index);
 	if(index == -1)
+	{
+		//printf("HERE\n");
 		return 0;
+	}
 	// Return pointer to datum
 	else
-		return ((hash_cell *)hash_map->map)[index].datum;
+	{
+		//printf("NAH, HERE %p\n", ((hash_cell *)hash_map->map)[index].datum);
+		return ((hash_cell *)hash_map->map)[index].datum;		
+	}
 }
 
 // Delete the value associated with the given key, returning the value on 
@@ -178,7 +157,7 @@ void * get(hash * hash_map, const char * key)
 void * delete(hash * hash_map, const char * key)
 {
 	// Retrieve index of hash, if it exists.
-	int index = get_index(hash_map, key);
+	int index = get_index(hash_map, key, 0);
 
 	// Mark out the hash cell, and set to null if it exists
 	if(index > -1)
@@ -187,6 +166,7 @@ void * delete(hash * hash_map, const char * key)
 		((hash_cell *)hash_map->map)[index].datum = 0;
 		((hash_cell *)hash_map->map)[index].hashed_key = 0;
 		((hash_cell *)hash_map->map)[index].status = WAS_USED;
+		hash_map->in_use--;
 		return datum;
 	}
 	// if index == -1, return null
@@ -203,63 +183,132 @@ float load(hash * hash_map)
 }
 
 // This function retrieves the index that a hash resides at in a map.
-// Both get() and delete() need an algorithm for this functionality,
+// Both get(), delete() need an algorithm for this functionality,
 // so it makes sense that both should reference one common location
 // If the hash doesn't exist, it returns -1.
-int get_index(hash * hash_map, const char * key)
+// Set looking_for_empty if using set(), so that way all three functions
+// reference same collision resolution algorithms
+int get_index(hash * hash_map, const char * key, int looking_for_empty)
 {
-	unsigned long hash_original = ElfHash(key);
+	unsigned long hash_original = cfarmhash(key, strlen(key));
+	//unsigned long hash_original = SuperFastHash(key, strlen(key));
+	//unsigned long hash_original = ElfHash(key);
 	unsigned long hash_mod = hash_original % hash_map->size;
+	//printf("ORIGINAL: %d\n", hash_mod);
 
 	hash_cell * map = hash_map->map;
 
-	// TODO: wrap "base case" where hash_mod is location of hash into
-	// collision resolution as its base case.
-	// Found it!
-	if((map[hash_mod].status == FULL) && 
-		(map[hash_mod].hashed_key == hash_original))
-		return hash_mod;
-	// Or, if nothing has ever existed here
-	else if(map[hash_mod].status == EMPTY)
-	{
-		return -1;
-	}
-
 	// go through collision resolution until reach empty cell
 	// unless we've explored the whole map...
-	// So keep track of the number of places we've visited, and if
-	// it matches the size of the map, stop. Use char as boolean for space.
-	char * visited = malloc(hash_map->size*sizeof(char));
-	int i = hash_map->size - 1;
-	for(; i >= 0; i--)
-	{
-		visited[i] = 0;
-	}
-	visited[hash_mod] = 1;
-	int num_visited = 1, number = 1, new_location = hash_mod;
+	// With linear probing we know we will see every spot in fixed-size map,
+	// whereas with the original quadratic probing scheme and weird sizes
+	// we could get stuck in loops
+
+	int num_visited = 0, new_location = hash_mod;
 	while(num_visited != hash_map->size)
 	{
-		new_location = (hash_mod + number*number) % hash_map->size;
-		// if we've finally found an empty spot, stop
+		new_location = (hash_mod + num_visited) % hash_map->size;
+		//printf("NEW: %d - %d %d %d\n", new_location, map[new_location].status == FULL, (!looking_for_empty),
+		//	(map[new_location].hashed_key == hash_original));		
+		// If looking for an empty spot and this is empty
+		// return proper value depending on looking_for_empty
 		if(map[new_location].status == EMPTY)
-			return -1;
-		// If we've finally found what we're looking for, stop
-		else if((map[new_location].status == FULL) && 
-			(map[new_location].hashed_key == hash_original))
-			return new_location;
-		// We haven't found what we're looking for, update info
-		if(!visited[new_location])
 		{
-			visited[new_location] = 1;
-			num_visited++;
+			//printf("EMPTY\n");
+			return looking_for_empty ? new_location : -1;
+		}
+		// if spot is in-use, use if looking for empty
+		else if((map[new_location].status == WAS_USED) & (looking_for_empty))
+		{
+			//printf("WAS_USED\n");
+			return new_location;
+		}
+		// we want to keep moving for get() and delete()
+		else if((map[new_location].status == FULL)
+			& (map[new_location].hashed_key == hash_original))
+		{
+			// found a hash collision from the hashing algorithm
+			// return an error for now
+			// Seeing this problem with set() - TODO: permanent fix
+			// that handles collisions that come from the hash algorithm
+			//printf("%d %d %s\n", map[new_location].hashed_key, hash_original, key);			
+			if(looking_for_empty)
+				return -1;
+			//printf("FULL, FOUND %d\n", map[new_location].hashed_key == hash_original);
+			return new_location;
 		}
 
-		number++;
+		// otherwise we haven't found what we're looking for
+		num_visited++;
 	}
 	// Couldn't find the hash's location
 	return -1;
 }
 
+// Different hash algorithm then ELFHash. After seeing very similar hashes 
+// with similar strings with the ELF-hash algorithm, resulting in poor
+// performance with linear probing, I began research into a different hashing 
+// algorithm. This algorithm is borrowed from Paul Hseih at
+// http://www.azillionmonkeys.com/qed/hash.html, licensed under LGPL. 
+// It's more complicated, but has completely different hashes with similar
+// inputs, unlike ELFHash. I should probaby look into a different probing
+// structure still, though
+
+#undef get16bits
+#if (defined(__GNUC__) && defined(__i386__)) || defined(__WATCOMC__) \
+  || defined(_MSC_VER) || defined (__BORLANDC__) || defined (__TURBOC__)
+#define get16bits(d) (*((const uint16_t *) (d)))
+#endif
+
+#if !defined (get16bits)
+#define get16bits(d) ((((uint32_t)(((const uint8_t *)(d))[1])) << 8)\
+                       +(uint32_t)(((const uint8_t *)(d))[0]) )
+#endif
+
+uint32_t SuperFastHash (const char * data, int len) {
+uint32_t hash = len, tmp;
+int rem;
+
+    if (len <= 0 || data == NULL) return 0;
+
+    rem = len & 3;
+    len >>= 2;
+
+    /* Main loop */
+    for (;len > 0; len--) {
+        hash  += get16bits (data);
+        tmp    = (get16bits (data+2) << 11) ^ hash;
+        hash   = (hash << 16) ^ tmp;
+        data  += 2*sizeof (uint16_t);
+        hash  += hash >> 11;
+    }
+
+    /* Handle end cases */
+    switch (rem) {
+        case 3: hash += get16bits (data);
+                hash ^= hash << 16;
+                hash ^= ((signed char)data[sizeof (uint16_t)]) << 18;
+                hash += hash >> 11;
+                break;
+        case 2: hash += get16bits (data);
+                hash ^= hash << 11;
+                hash += hash >> 17;
+                break;
+        case 1: hash += (signed char)*data;
+                hash ^= hash << 10;
+                hash += hash >> 1;
+    }
+
+    /* Force "avalanching" of final 127 bits */
+    hash ^= hash << 3;
+    hash += hash >> 5;
+    hash ^= hash << 4;
+    hash += hash >> 17;
+    hash ^= hash << 25;
+    hash += hash >> 6;
+
+    return hash;
+}
 
 // Direct copy of Wikipedia's explanation of the ELF hash, which is a variant
 // of the PJW hash. This is conventionally used for ELF files in Unix systems.
@@ -281,4 +330,12 @@ unsigned long ElfHash(const char *s)
 void * retrieveLocation(hash * hash_map, int loc)
 {
 	return ((hash_cell * )(hash_map->map))[loc].datum;
+}
+
+int keyCollision(hash * hash_map, const char * key)
+{
+	unsigned long hash_original = cfarmhash(key, strlen(key));
+	//int hash_original = SuperFastHash(data, strlen(data));
+	printf("%d %d\n", ((hash_cell *)hash_map->map)[hash_original % hash_map->size].hashed_key, hash_original);
+	return ((hash_cell *)hash_map->map)[hash_original % hash_map->size].hashed_key == hash_original;
 }
