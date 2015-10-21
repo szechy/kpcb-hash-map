@@ -68,11 +68,12 @@ hash * construct_hash(int size)
 void delete_hash(hash * hash_map)
 {
 	// free up the map, in reverse order
-	// TODO: Not sure how to deal with clean-up of objects in map yet
-	// Re, above: just kidding. Memory system keeps track of allocations.
-	// If there's an allocation at that address, memory system knows the size.
+	// Memory system keeps track of allocations, and how many bytes each
+	// pointer points to. If there's an allocation at that address, memory 
+	// system knows the size.
 	for(int i = hash_map->size - 1; i >= 0; --i)
 	{
+		//printf("%d %p\n", i, ((hash_cell *)hash_map->map)[i].datum);
 		//free(((hash_cell *)hash_map->map)[i].hashed_key);
 		free(((hash_cell *)hash_map->map)[i].datum);
 		// this code below pointless because free(hash_map->map) handles arrays
@@ -107,16 +108,8 @@ int set(hash * hash_map, const char * key, void * element)
 	unsigned long hash_original = cfarmhash(key, strlen(key));
 	//unsigned long hash_original = SuperFastHash(key, strlen(key));
 	
-	//hash_cell * map = hash_map->map;
-
-	//printf("DATA: %d\n", *(int *)element);
-
 	int loc = get_index(hash_map, key, 1);
-	if(*(int *)element == 3105)
-		printf("3105: %d\n", loc);
-	if(*(int *)element == 67081)
-		printf("67081: %d\n", loc);
-	//printf("LOCATION FOUND: %d for %d\n", loc, *(int *)element);
+
 	if(loc != -1)
 	{
 		((hash_cell *)hash_map->map)[loc].hashed_key = hash_original;
@@ -138,16 +131,13 @@ void * get(hash * hash_map, const char * key)
 	// Retrieve index of hash, if it exists.
 	int index = get_index(hash_map, key, 0);
 	// send failure condition if not found
-	//printf("INDEX: %d\n", index);
 	if(index == -1)
 	{
-		//printf("HERE\n");
 		return 0;
 	}
 	// Return pointer to datum
 	else
 	{
-		//printf("NAH, HERE %p\n", ((hash_cell *)hash_map->map)[index].datum);
 		return ((hash_cell *)hash_map->map)[index].datum;		
 	}
 }
@@ -158,11 +148,11 @@ void * delete(hash * hash_map, const char * key)
 {
 	// Retrieve index of hash, if it exists.
 	int index = get_index(hash_map, key, 0);
-
 	// Mark out the hash cell, and set to null if it exists
 	if(index > -1)
 	{
 		void * datum = ((hash_cell *)hash_map->map)[index].datum;
+		//free(((hash_cell *)hash_map->map)[index].datum);
 		((hash_cell *)hash_map->map)[index].datum = 0;
 		((hash_cell *)hash_map->map)[index].hashed_key = 0;
 		((hash_cell *)hash_map->map)[index].status = WAS_USED;
@@ -179,7 +169,7 @@ void * delete(hash * hash_map, const char * key)
 // the size of the dat structure is fixed, this should never be greater than 1.
 float load(hash * hash_map)
 {
-	return 0;
+	return ((float)hash_map->in_use)/hash_map->size;
 }
 
 // This function retrieves the index that a hash resides at in a map.
@@ -191,8 +181,7 @@ float load(hash * hash_map)
 int get_index(hash * hash_map, const char * key, int looking_for_empty)
 {
 	unsigned long hash_original = cfarmhash(key, strlen(key));
-	//unsigned long hash_original = SuperFastHash(key, strlen(key));
-	//unsigned long hash_original = ElfHash(key);
+
 	unsigned long hash_mod = hash_original % hash_map->size;
 	//printf("ORIGINAL: %d\n", hash_mod);
 
@@ -321,7 +310,7 @@ unsigned long ElfHash(const char *s)
 	{
 		h = (h<<4) + *s++;
 	}
-	if(high = (h & 0xF00000000))
+	if((high = (h & 0xF00000000)))
 		h ^= high >> 24;
 	h &= ~high;
 	return h;
@@ -336,6 +325,6 @@ int keyCollision(hash * hash_map, const char * key)
 {
 	unsigned long hash_original = cfarmhash(key, strlen(key));
 	//int hash_original = SuperFastHash(data, strlen(data));
-	printf("%d %d\n", ((hash_cell *)hash_map->map)[hash_original % hash_map->size].hashed_key, hash_original);
+	//printf("%d %d\n", ((hash_cell *)hash_map->map)[hash_original % hash_map->size].hashed_key, hash_original);
 	return ((hash_cell *)hash_map->map)[hash_original % hash_map->size].hashed_key == hash_original;
 }
