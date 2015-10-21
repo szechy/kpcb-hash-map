@@ -530,7 +530,9 @@ int delete_one()
 		// Half the time, delete the item - other half, it's already been
 		// deleted, so check that it fails       
 		if(i % 2 == 0)
-			assert(delete(obj, string) == 0);
+        {
+            assert(delete(obj, string) == 0);            
+        }
 		else
 		{
 			assert(*(int *) delete(obj, string) == i);                       
@@ -571,7 +573,9 @@ int delete_one()
 		// Half the time, delete the item - other half, it's already been
 		// deleted, so check that it fails       
 		if(i % 2 == 0)
-			assert(delete(obj, string) == 0);
+        {
+            assert(delete(obj, string) == 0);            
+        }
 		else
 		{
 			// Free manually managed items from memory

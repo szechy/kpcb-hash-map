@@ -32,14 +32,16 @@ int get_index(hash * hash_map, const char * key, int looking_for_empty);
 // number of objects. If size is negative, returns a nullptr.
 hash * construct_hash(int size)
 {
+	// Check if space is negative - if so, nullptr.
+	if(size < 0)
+	{
+		return 0;
+	}
+	
 	// Create hash structure
 	hash * new_hash = malloc(sizeof(hash));
 
-	// Check if space is negative - if so, nullptr.
-	if(size < 0)
-		return 0;
-
-	else if(size == 0)
+	if(size == 0)
 	{
 		new_hash->map = 0;
 		new_hash->in_use = 0;		
@@ -102,7 +104,9 @@ int set(hash * hash_map, const char * key, void * element)
 
 	// if the map is full, don't bother - and report we're full
 	if(hash_map->in_use == hash_map->size)
+	{
 		return 0;
+	}
 
 	// Compute hash, modulus the size of the map
 	unsigned long hash_original = cfarmhash(key, strlen(key));
@@ -119,7 +123,9 @@ int set(hash * hash_map, const char * key, void * element)
 		return 1;
 	}
 	else
+	{
 		return 0;
+	}
 }
 
 // Return the value associated with the given key, or null if no value is set.
@@ -161,7 +167,9 @@ void * delete(hash * hash_map, const char * key)
 	}
 	// if index == -1, return null
 	else
+	{
 		return 0;
+	}
 }
 
 // Return a float value representing the load factor 
@@ -222,7 +230,9 @@ int get_index(hash * hash_map, const char * key, int looking_for_empty)
 			// that handles collisions that come from the hash algorithm
 			//printf("%d %d %s\n", map[new_location].hashed_key, hash_original, key);			
 			if(looking_for_empty)
+			{
 				return -1;
+			}
 			//printf("FULL, FOUND %d\n", map[new_location].hashed_key == hash_original);
 			return new_location;
 		}
