@@ -2,11 +2,9 @@
 The KPCB Engineering Fellows' application's challenge question: build a fixed-size hash map.
 
 ##Todo:
-* [Everything]
-* Choose hashing algorithm
-* Choose regression framework (check MH's for homework, or write Makefile-based one?)
 * Interactive shell program
 * Test on Red Hat/UMich's CAEN service
+* Figure out some sort of profiling to perform performance testing (used gprof in EECS 281, should look into whether that's C-compatible and not just C++)
 
 ##Deliverables
 * `kpcb-hash-map`
