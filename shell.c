@@ -153,7 +153,7 @@ int main(int argc, char ** argv)
 	}
 
 	// Clean up remaining memory from map
-	delete_hash(map);
+	free_hash(map);
 
 	return 0;
 }

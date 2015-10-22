@@ -33,7 +33,7 @@ int construct_size_zero()
 	assert(obj->size == 0);
 
 	// Clean up hash
-	delete_hash(obj);
+	free_hash(obj);
 	return 1;
 }
 
@@ -51,7 +51,7 @@ int construct_size_one()
 	assert(obj->size == 1);
 
 	// Clean up hash
-	delete_hash(obj);
+	free_hash(obj);
 
 	return 1;
 }
@@ -70,7 +70,7 @@ int construct_size_ten()
 	assert(obj->size == 10);
 
 	// Clean up hash
-	delete_hash(obj);
+	free_hash(obj);
 
 	return 1;
 }
@@ -89,7 +89,7 @@ int construct_size_one_kb()
 	assert(obj->size == 1000);
 
 	// Clean up hash
-	delete_hash(obj);
+	free_hash(obj);
 
 	return 1;
 }
@@ -109,7 +109,7 @@ int construct_size_one_mb()
 	assert(obj->size == 1000000);
 
 	// Clean up hash
-	delete_hash(obj);
+	free_hash(obj);
 
 	return 1;
 }
@@ -135,7 +135,7 @@ int construct_size_one_mb()
 	assert(*(int *)retrieveLocation(obj, 0) == 5);
 
 	// Clean up hash
-	delete_hash(obj);
+	free_hash(obj);
 
 	return 1;
  }
@@ -174,7 +174,7 @@ int construct_size_one_mb()
 	assert(*(int *)retrieveLocation(obj, 0) == 4);
 
 	// Clean up hash
-	delete_hash(obj);
+	free_hash(obj);
 
 	return 1;
  }
@@ -213,7 +213,7 @@ int construct_size_one_mb()
 	assert(*(int *)retrieveLocation(obj, 4) == 4);
 
 	// Clean up hash
-	delete_hash(obj);
+	free_hash(obj);
 
 	return 1;
  }
@@ -255,7 +255,7 @@ int construct_size_one_mb()
 	assert(*(int *)retrieveLocation(obj, 4) == 9);  
 
 	// Clean up hash
-	delete_hash(obj);
+	free_hash(obj);
 
 	return 1;
  }
@@ -282,7 +282,7 @@ int construct_size_one_mb()
 	}
 
 	// Clean up hash
-	delete_hash(obj);
+	free_hash(obj);
 
 	return 1;
 }
@@ -303,7 +303,7 @@ int get_one()
 	assert(*(int *)get(obj, "TestKey") == *number);
 
 	// Clean up hash
-	delete_hash(obj);
+	free_hash(obj);
 
 	return 1;
 }
@@ -324,7 +324,7 @@ int get_one()
 	assert(get(obj, "DifferentKey") == 0);
 
 	// Clean up hash
-	delete_hash(obj);    
+	free_hash(obj);    
 
 	return 1;
  }
@@ -367,7 +367,7 @@ int get_one()
 	assert(get(obj, "Test42") == 0);
 
 	// Clean up hash
-	delete_hash(obj);    
+	free_hash(obj);    
 
 	return 1;
  }
@@ -407,7 +407,7 @@ int get_thousand()
 	}
 
 	// Clean up hash
-	delete_hash(obj);    
+	free_hash(obj);    
 
 	return 1;
 }
@@ -450,7 +450,7 @@ int get_million()
 	}
 
 	// Clean up hash
-	delete_hash(obj);    
+	free_hash(obj);    
 	 
 	return 1;
 }
@@ -472,7 +472,7 @@ int delete_one()
 	assert(*(int *)delete(obj, string) == 5);
 
 	// Clean up hash
-	delete_hash(obj);
+	free_hash(obj);
 
 	return 1;
 }
@@ -496,7 +496,7 @@ int delete_one()
 	assert(delete(obj, "Test1") == 0);
 
 	// Clean up hash
-	delete_hash(obj);
+	free_hash(obj);
 
 	a = 0; 
 
@@ -540,7 +540,7 @@ int delete_one()
 	}
 
 	// Clean up hash
-	delete_hash(obj);
+	free_hash(obj);
 
 	return 1;
  }
@@ -586,7 +586,7 @@ int delete_one()
 	}  
 
 	// Clean up now-empty hash
-	delete_hash(obj);
+	free_hash(obj);
 
 	return 1;
 }
@@ -639,7 +639,7 @@ int delete_one()
 	}  
 
 	// Clean up hash
-	delete_hash(obj);
+	free_hash(obj);
 
 	return 1;
 }
@@ -653,7 +653,7 @@ int load_one_empty()
 
 	assert(load(obj) == 0);
 
-	delete_hash(obj);
+	free_hash(obj);
 
 	return 1;
 }
@@ -673,7 +673,7 @@ int load_one_full()
 	// Check load factor
 	assert(load(obj) == 1);
 
-	delete_hash(obj);
+	free_hash(obj);
 
 	return 1;
 }
@@ -702,7 +702,7 @@ int load_ten()
 
     assert(load(obj) == 1);
 
-    delete_hash(obj);
+    free_hash(obj);
 
     return 1;
 }
@@ -731,7 +731,7 @@ int load_thousand()
 
     assert(load(obj) == 1);
 
-    delete_hash(obj);
+    free_hash(obj);
 
     return 1;
 }
@@ -760,7 +760,7 @@ int load_million()
 
     assert(load(obj) == 1);
 
-    delete_hash(obj);
+    free_hash(obj);
 
     return 1;
 }

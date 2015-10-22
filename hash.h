@@ -14,8 +14,9 @@ typedef struct
 // number of objects.
 hash * construct_hash(int size);
 
-// Necessary for manual memory management
-void delete_hash(hash *);
+// Necessary for manual memory management - the 'destructor' equivalent for
+// this hash map pseudo-class.
+void free_hash(hash *);
 
 // Couldn't use 'bool', due to no such type existing in C
 // currently debating use of uint8_t, or int, or creating a 'bool' type

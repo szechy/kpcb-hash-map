@@ -67,7 +67,7 @@ hash * construct_hash(int size)
 }
 
 // Necessary for manual memory management
-void delete_hash(hash * hash_map)
+void free_hash(hash * hash_map)
 {
 	// free up the map, in reverse order
 	// Memory system keeps track of allocations, and how many bytes each
