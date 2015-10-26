@@ -47,7 +47,12 @@ int keyCollision(hash *, const char *);
 
 uint32_t SuperFastHash (const char * data, int len);
 
-// Returns specific element in the hash - only for testing
+// Returns specific element in the hash - only for testing.
+// This function should not be used by consumers.
+// In C++ and other object-oriented languages, it would be marked private
+// and the testing classes would be a 'friend' (C++ keyword) of this one
+// private function. Not sure how to implement that in C.
+// Maybe need to rewrite tests to not be dependent on this function.
 void * retrieveLocation(hash *, int);
 
 #endif

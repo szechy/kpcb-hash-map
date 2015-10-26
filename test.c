@@ -50,6 +50,9 @@ int main(int argc, char const *argv[])
     run_test(load_thousand, load_thousand_desc);
     run_test(load_million, load_million_desc);
 
+  /* *** WHOLE_CYCLE TESTS *** */
+    run_test(whole_cycle_million, whole_cycle_million_desc);
+
   // End the suite
     end_suite();
     return 0;

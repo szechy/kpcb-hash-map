@@ -260,15 +260,19 @@ int construct_size_one_mb()
 	return 1;
  }
 
-/* Fill a hash map of size 1,000,000, with 1,000,000 key-value pairs. 
- * Likely to be a lot of collisions. Stress test case.
+/* Fill a hash map of size 1,000,000, with 950,000 key-value pairs. 
+ * Performance limitations of linear probing makes those last 50,000
+ * pairs take an extremely long time - makes testing much longer.
+ * Ideally use a different, also efficient collision resolution algorithm.
+ * TODO: optimize for this test case and full 1,000,000. 
+ * Stress test case.
  * BEHAVIOR: Return 1, with successful set
  */
  int set_million()
  {
 	hash * obj = construct_hash(1000000);
 
-	int i = 100000;
+	int i = 94999;
 	int * number;
 	char string[50];
 	for(; i >= 0; i--)
@@ -412,10 +416,12 @@ int get_thousand()
 	return 1;
 }
 
-/* Retrieve 1,000,000 values perfectly
- * Behavior: Successfully retrieve 1,000,000
- * Test currently only at 950,000 because last 50,000 exceptionally
- * time-consuming. TODO: optimize for this test case and full 1,000,000
+/* Retrieve 950,000 values perfectly
+ * Performance limitations of linear probing makes those last 50,000
+ * pairs take an extremely long time - makes testing much longer.
+ * Ideally use a different, also efficient collision resolution algorithm.
+ * TODO: optimize for this test case and full 1,000,000, likely with
+ * different collision resolution algorithm.
  */
 int get_million()
 {
@@ -549,8 +555,8 @@ int delete_one()
  }
 
 
-/* Fill a hash map of size 1,000,000, with 1,000,000 key-value pairs. 
- * Likely to be a lot of collisions. Stress test case.
+/* Fill a hash map of size 1,000 with 1,000 key-value pairs, then delete().
+ * Medium-sized stress test case, although could be similar to real-world use.
  * BEHAVIOR: Return 1, with successful set
  */
  int delete_thousand()
@@ -594,7 +600,10 @@ int delete_one()
 	return 1;
 }
 
-/* Fill a hash map of size 1,000,000, with 1,000,000 key-value pairs. 
+/* Fill a hash map of size 1,000,000, with 950,000 key-value pairs. 
+ * Performance limitations of linear probing makes those last 50,000
+ * pairs take an extremely long time - makes testing much longer.
+ * Ideally use a different, also efficient collision algorithm.
  * Likely to be a lot of collisions. Stress test case.
  * BEHAVIOR: Return 1, with successful set
  */
@@ -711,7 +720,7 @@ int load_ten()
 }
 
 /* Check load factor of various stages of hash map of size 1,000.
- * Conventional to meidum-sized use case.
+ * Conventional to medium-sized use case.
  * BEHAVIOR: Return 1, with successful load factors with each set.
  */
 int load_thousand()
@@ -739,8 +748,8 @@ int load_thousand()
     return 1;
 }
 
-/* Check load factor of various stages of hash map of size 1,000.
- * Conventional to meidum-sized use case.
+/* Check load factor of various stages of hash map of size 950,000.
+ * Large-sized use case.
  * BEHAVIOR: Return 1, with successful load factors with each set.
  */
 int load_million()
@@ -766,4 +775,73 @@ int load_million()
     free_hash(obj);
 
     return 1;
+}
+
+/* set() 950,000 values in hash map, then get() them, re-set() them,
+ * calculate load(), then delete().
+ * Typical usage of hash map class on large scale.
+ * BEHAVIOR: Return 1, with all operations successful on each key.
+ */
+
+int whole_cycle_million()
+{
+	hash * obj = construct_hash(1000000);
+
+	int i = 949999;
+	int * number;
+	char string[50];
+	for(; i >= 0; i--)
+	{
+		// generate new string
+		sprintf(string, "Test%d", i);
+		// generate new int
+		number = (int *) malloc(sizeof(int));
+		*number = i;
+		assert(set(obj, string, (void *)number));
+
+		if(i % 10000 == 0)
+		{
+			sprintf(string, "PROGRESS: %d", i);
+			// can uncomment line below to get indicator of progress
+			//printf("%s\n", string);  
+		}
+	}
+
+	   // find valid values
+	for(i = 0; i < 950000; i++)
+	{
+		// generate new string and find valid item
+		sprintf(string, "Test%d", i);
+		number = (int *)get(obj, string);
+		
+		// print out update status to let user know still processing
+		assert(*number == i);
+
+		// free number
+		free(number);
+		// substitute new number in its place
+		number = (int *) malloc(sizeof(int));
+		*number = i + 950000;
+		assert(set(obj, string, (void *)number));
+
+		// Check load factor
+        assert(load(obj) == (float)(950000-i)/1000000);
+
+		// Free manually managed items from memory
+		int * ptr = delete(obj, string);
+		assert(*ptr == i + 950000);          
+		free(ptr);
+
+		if(i % 10000 == 0)
+		{
+			sprintf(string, "PROGRESS: %d", i);
+			// can uncomment line below to get indicator of progress
+			//printf("%s\n", string);  
+		}
+	}
+
+	// Clean up hash
+	free_hash(obj);    
+	 
+	return 1;
 }

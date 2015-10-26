@@ -1,4 +1,7 @@
 #include "hash.h"
+// cfarmhash borrowed from Fredrik's fantastic repository (which is originally
+// from Google's fantastic work on FarmHash):
+// https://github.com/fredrikwidlund/cfarmhash
 #include "cfarmhash.h"
 #include <stdio.h>
 #include <string.h>
@@ -78,11 +81,7 @@ void free_hash(hash * hash_map)
 	int i = hash_map->size - 1;
 	for(; i >= 0; --i)
 	{
-		//printf("%d %p\n", i, ((hash_cell *)hash_map->map)[i].datum);
-		//free(((hash_cell *)hash_map->map)[i].hashed_key);
 		free(((hash_cell *)hash_map->map)[i].datum);
-		// this code below pointless because free(hash_map->map) handles arrays
-		//free(&(((hash_cell *)hash_map->map)[i]));
 	}
 
 	free(hash_map->map);
@@ -119,10 +118,12 @@ int set(hash * hash_map, const char * key, void * element)
 
 	if(loc != -1)
 	{
+		// are we claiming a new spot or simply overwriting?
+		if(((hash_cell *)hash_map->map)[loc].hashed_key == 0)
+			hash_map->in_use++;
 		((hash_cell *)hash_map->map)[loc].hashed_key = hash_original;
 		((hash_cell *)hash_map->map)[loc].datum = element;		
 		((hash_cell *)hash_map->map)[loc].status = FULL;
-		hash_map->in_use++;
 		return 1;
 	}
 	else
@@ -161,7 +162,6 @@ void * delete(hash * hash_map, const char * key)
 	if(index > -1)
 	{
 		void * datum = ((hash_cell *)hash_map->map)[index].datum;
-		//free(((hash_cell *)hash_map->map)[index].datum);
 		((hash_cell *)hash_map->map)[index].datum = 0;
 		((hash_cell *)hash_map->map)[index].hashed_key = 0;
 		((hash_cell *)hash_map->map)[index].status = WAS_USED;
@@ -194,7 +194,6 @@ int get_index(hash * hash_map, const char * key, int looking_for_empty)
 	unsigned long hash_original = cfarmhash(key, strlen(key));
 
 	unsigned long hash_mod = hash_original % hash_map->size;
-	//printf("ORIGINAL: %d\n", hash_mod);
 
 	hash_cell * map = hash_map->map;
 
@@ -212,35 +211,27 @@ int get_index(hash * hash_map, const char * key, int looking_for_empty)
 	while(num_visited != hash_map->size)
 	{
 		new_location = (hash_mod + num_visited) % hash_map->size;
-		//printf("NEW: %d - %d %d %d\n", new_location, map[new_location].status == FULL, (!looking_for_empty),
-		//	(map[new_location].hashed_key == hash_original));		
 		// If looking for an empty spot and this is empty
 		// return proper value depending on looking_for_empty
 		if(map[new_location].status == EMPTY)
 		{
-			//printf("EMPTY\n");
 			return looking_for_empty ? new_location : -1;
 		}
 		// if spot is in-use, use if looking for empty
 		else if((map[new_location].status == WAS_USED) & (looking_for_empty))
 		{
-			//printf("WAS_USED\n");
 			return new_location;
 		}
 		// we want to keep moving for get() and delete()
 		else if((map[new_location].status == FULL)
 			& (map[new_location].hashed_key == hash_original))
 		{
-			// found a hash collision from the hashing algorithm
-			// return an error for now
-			// Seeing this problem with set() - TODO: permanent fix
-			// that handles collisions that come from the hash algorithm
-			//printf("%d %d %s\n", map[new_location].hashed_key, hash_original, key);			
-			if(looking_for_empty)
-			{
-				return -1;
-			}
-			//printf("FULL, FOUND %d\n", map[new_location].hashed_key == hash_original);
+			// Possible error here - what if hashing algorithm hashes
+			// two keys to same thing? cfarmhash has not yet caused this
+			// to happen, unlike other two hashing algorithms - willing
+			// to risk the probability of this not happening with that
+			// one algorithm for the unimportant and small scale of this
+			// hash map library.
 			return new_location;
 		}
 
@@ -249,6 +240,15 @@ int get_index(hash * hash_map, const char * key, int looking_for_empty)
 	}
 	// Couldn't find the hash's location
 	return -1;
+}
+
+// This function should not be used by consumers.
+// In C++ and other object-oriented languages, it would be marked private
+// and the testing classes would be a 'friend' (C++ keyword) of this one
+// private function. Not sure how to implement that in C.
+void * retrieveLocation(hash * hash_map, int loc)
+{
+	return ((hash_cell * )(hash_map->map))[loc].datum;
 }
 
 // Different hash algorithm then ELFHash. After seeing very similar hashes 
@@ -260,7 +260,7 @@ int get_index(hash * hash_map, const char * key, int looking_for_empty)
 // inputs, unlike ELFHash. I should probaby look into a different probing
 // structure still, though
 
-#undef get16bits
+/*#undef get16bits
 #if (defined(__GNUC__) && defined(__i386__)) || defined(__WATCOMC__) \
   || defined(_MSC_VER) || defined (__BORLANDC__) || defined (__TURBOC__)
 #define get16bits(d) (*((const uint16_t *) (d)))
@@ -280,7 +280,7 @@ int rem;
     rem = len & 3;
     len >>= 2;
 
-    /* Main loop */
+    // Main loop
     for (;len > 0; len--) {
         hash  += get16bits (data);
         tmp    = (get16bits (data+2) << 11) ^ hash;
@@ -289,7 +289,7 @@ int rem;
         hash  += hash >> 11;
     }
 
-    /* Handle end cases */
+    // Handle end cases 
     switch (rem) {
         case 3: hash += get16bits (data);
                 hash ^= hash << 16;
@@ -305,7 +305,7 @@ int rem;
                 hash += hash >> 1;
     }
 
-    /* Force "avalanching" of final 127 bits */
+    // Force "avalanching" of final 127 bits
     hash ^= hash << 3;
     hash += hash >> 5;
     hash ^= hash << 4;
@@ -332,16 +332,4 @@ unsigned long ElfHash(const char *s)
 	h &= ~high;
 	return h;
 }
-
-void * retrieveLocation(hash * hash_map, int loc)
-{
-	return ((hash_cell * )(hash_map->map))[loc].datum;
-}
-
-int keyCollision(hash * hash_map, const char * key)
-{
-	unsigned long hash_original = cfarmhash(key, strlen(key));
-	//int hash_original = SuperFastHash(data, strlen(data));
-	//printf("%d %d\n", ((hash_cell *)hash_map->map)[hash_original % hash_map->size].hashed_key, hash_original);
-	return ((hash_cell *)hash_map->map)[hash_original % hash_map->size].hashed_key == hash_original;
-}
+*/
