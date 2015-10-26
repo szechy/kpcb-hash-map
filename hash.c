@@ -2,6 +2,7 @@
 #include "cfarmhash.h"
 #include <stdio.h>
 #include <string.h>
+#include <stdint.h>
 
 // hash_cell is the struct for each cell in a map.
 // This struct is not stored in the header to prevent outside access
@@ -56,7 +57,8 @@ hash * construct_hash(int size)
 	new_hash->map = (void *)map;
 
 	// iterate through the whole map and set initial values
-	for(int i = 0; i < size; ++i)
+	int i = 0;
+	for(; i < size; ++i)
 	{
 		((hash_cell *)new_hash->map)[i].hashed_key = 0;
 		((hash_cell *)new_hash->map)[i].datum = 0;
@@ -73,7 +75,8 @@ void free_hash(hash * hash_map)
 	// Memory system keeps track of allocations, and how many bytes each
 	// pointer points to. If there's an allocation at that address, memory 
 	// system knows the size.
-	for(int i = hash_map->size - 1; i >= 0; --i)
+	int i = hash_map->size - 1;
+	for(; i >= 0; --i)
 	{
 		//printf("%d %p\n", i, ((hash_cell *)hash_map->map)[i].datum);
 		//free(((hash_cell *)hash_map->map)[i].hashed_key);
@@ -198,8 +201,12 @@ int get_index(hash * hash_map, const char * key, int looking_for_empty)
 	// go through collision resolution until reach empty cell
 	// unless we've explored the whole map...
 	// With linear probing we know we will see every spot in fixed-size map,
-	// whereas with the original quadratic probing scheme and weird sizes
-	// we could get stuck in loops
+	// in minimum time, which is great with high load factors.
+	// With the original implementation of quadratic probing scheme and 
+	// non-prime-number-sizes we could get stuck in loops where only a small
+	// percentage of the map was being visited. Also had to have O(n) memory
+	// to track when map was fully visited. With linear probing, easy to
+	// establish when whole map is visited (great with high load factors) 
 
 	int num_visited = 0, new_location = hash_mod;
 	while(num_visited != hash_map->size)

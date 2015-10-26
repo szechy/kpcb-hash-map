@@ -521,7 +521,7 @@ int delete_one()
 		sprintf(string, "Test%d", i);
 		number = malloc(sizeof(int));
 		*number = i;
-		assert(set(obj, string, &i));  
+		assert(set(obj, string, number));  
 	}
 
 	for(i = 19; i >= 0; i--)
@@ -530,12 +530,15 @@ int delete_one()
 		// Half the time, delete the item - other half, it's already been
 		// deleted, so check that it fails       
 		if(i % 2 == 0)
-        {
-            assert(delete(obj, string) == 0);            
-        }
+				{
+						assert(delete(obj, string) == 0);            
+				}
 		else
 		{
-			assert(*(int *) delete(obj, string) == i);                       
+			// Free manually managed items from memory
+			number = delete(obj, string);
+			assert(*number == i/2);          
+			free(number); 
 		}
 	}
 
@@ -579,9 +582,9 @@ int delete_one()
 		else
 		{
 			// Free manually managed items from memory
-			int * ptr = delete(obj, string);
-			assert(*ptr == i/2);          
-			free(ptr); 
+			number = delete(obj, string);
+			assert(*number == i/2);          
+			free(number); 
 		}
 	}  
 
@@ -629,7 +632,7 @@ int delete_one()
 			assert(delete(obj, string) == 0);
 		else
 		{
-			 assert(*(int *) delete(obj, string) == i);           
+			assert(*(int *) delete(obj, string) == i);
 		}
 		if(i % 10000 == 0)
 		{

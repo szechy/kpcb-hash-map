@@ -2,6 +2,7 @@
 #define HASH
 
 #include <stdlib.h>
+#include <stdint.h>
 
 typedef struct
 {
