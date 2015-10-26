@@ -74,11 +74,10 @@ int main(int argc, char ** argv)
 		printf("$ ");
 		length = getline(&input, &input_length, stdin);
 		
-		// parse command		
-		if(length <= 1)
+		// parse command
+		// print help again
+		if((strcmp(input, "h\n") == 0) || (strcmp(input, "help\n") == 0))
 		{
-			printf("Invalid input received: '%s'\n. Printing help.\n\n",
-				input);
 			print_help();
 		}
 		// Exit program
@@ -148,7 +147,8 @@ int main(int argc, char ** argv)
 		// Didn't recognize command
 		else
 		{
-			printf("Command not recognized. Try again.\n");
+			printf("Command not recognized. Try again. Type 'h' or 'help'"\
+				" to see the help page.\n");
 		}
 
 	}
