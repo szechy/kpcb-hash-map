@@ -24,6 +24,23 @@ void print_help()
 	printf("%s\n%s\n%s\n", help, help_flags, help_functions);
 }
 
+// shamelessly borrowed from Dave_Sinkula's awesome example on the
+// cprogramming.com boards
+// http://cboard.cprogramming.com/c-programming/27572-atoi-return-error.html
+int strtol_wrapper(char *s, int *value)
+{
+	if ( s != NULL && *s != '\0' && value != NULL )
+	{
+		char * endptr = s;
+		*value = (int)strtol(s, &endptr, 10);
+		if( *endptr == '\0' || *endptr == '\n')
+		{
+			return 1;
+		}
+	}
+	return 0; /* failed to convert string to integer */
+}
+
 int main(int argc, char ** argv)
 {
 	// Parse command line argument for help, or hash map size.
@@ -66,19 +83,17 @@ int main(int argc, char ** argv)
 
 	// Main while loop for parsing commands
 	size_t input_length = 255;
-	int length = 0;
 	char * input = (char *)malloc(sizeof(char)*255);
 	while(1)
 	{
 		// prepare "shell"-feel and acquire input from user
 		printf("$ ");
-		length = getline(&input, &input_length, stdin);
+		getline(&input, &input_length, stdin);
 		
-		// parse command		
-		if(length <= 1)
+		// parse command
+		// print help again
+		if((strcmp(input, "h\n") == 0) || (strcmp(input, "help\n") == 0))
 		{
-			printf("Invalid input received: '%s'\n. Printing help.\n\n",
-				input);
 			print_help();
 		}
 		// Exit program
@@ -115,8 +130,16 @@ int main(int argc, char ** argv)
 			else
 			{
 				int * number = malloc(sizeof(int));
-				*number = atoi(&input[value_loc - input + 1]);
-				set(map, key, number);
+				int result = strtol_wrapper(&input[value_loc - input + 1],
+					number);
+				//*number = atoi(&input[value_loc - input + 1]);				
+				if(result)
+					set(map, key, number);
+				else
+				{
+					printf("Invalid integer given %d. Try again. \n", *number);
+					free(number);					
+				}
 			}
 			free(key);
 		}
@@ -148,12 +171,14 @@ int main(int argc, char ** argv)
 		// Didn't recognize command
 		else
 		{
-			printf("Command not recognized. Try again.\n");
+			printf("Command not recognized. Try again. Type 'h' or 'help'"\
+				" to see the help page.\n");
 		}
 
 	}
 
-	// Clean up remaining memory from map
+	// Clean up remaining memory from map and input string
+	free(input);
 	free_hash(map);
 
 	return 0;

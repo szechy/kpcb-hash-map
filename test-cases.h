@@ -26,7 +26,7 @@ static const char * set_five_with_colls_desc = "Fill hash map of size 5 with 5 k
 int set_five_with_colls();
 static const char * set_ten_with_colls_desc = "Fill hash map of size 10 with 10 key-value pairs, three collisions";
 int set_ten_with_colls();
-static const char * set_million_desc = "Fill hash map of size 1,000,000 with 100,000 key-value pairs";
+static const char * set_million_desc = "Fill hash map of size 1,000,000 with 950,000 key-value pairs";
 int set_million();
 
 /* get(key, value) test cases */
@@ -38,7 +38,7 @@ static const char * get_ten_desc = "Retrieve ten values from hash map";
 int get_ten();
 static const char * get_thousand_desc = "Retrieve 1000 values from hash map";
 int get_thousand();
-static const char * get_million_desc = "Retrieve 1,000,000 values from hash map";
+static const char * get_million_desc = "Retrieve 950,000 values from hash map";
 int get_million();
 
 /* delete(key, value) test cases */
@@ -50,7 +50,7 @@ static const char * delete_ten_with_fail_desc = "Delete ten values from hash map
 int delete_ten_with_fail();
 static const char * delete_thousand_desc = "Delete 1000 values from hash map";
 int delete_thousand();
-static const char * delete_million_desc = "Delete 1,000,000 values from hash map";
+static const char * delete_million_desc = "Delete 950,000 values from hash map";
 int delete_million();
 
 /* load-factor test cases */
@@ -62,8 +62,12 @@ static const char * load_ten_desc = "Check load factor of various hash map state
 int load_ten();
 static const char * load_thousand_desc = "Check load factor of various hash map states of size 1,000";
 int load_thousand();
-static const char * load_million_desc = "Check load factor of various hash map states of size 1,000,000";
+static const char * load_million_desc = "Check load factor of various hash map states of size 950,000";
 int load_million();
+
+/* whole-cycle test cases - use all four functions */
+static const char * whole_cycle_million_desc = "Set multiple times, get, delete, and check load factor of size 950,000";
+int whole_cycle_million();
 
 
 #endif
