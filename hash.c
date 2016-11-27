@@ -198,8 +198,12 @@ int get_index(hash * hash_map, const char * key, int looking_for_empty)
 	// go through collision resolution until reach empty cell
 	// unless we've explored the whole map...
 	// With linear probing we know we will see every spot in fixed-size map,
-	// whereas with the original quadratic probing scheme and weird sizes
-	// we could get stuck in loops
+	// in minimum time, which is great with high load factors.
+	// With the original implementation of quadratic probing scheme and 
+	// non-prime-number-sizes we could get stuck in loops where only a small
+	// percentage of the map was being visited. Also had to have O(n) memory
+	// to track when map was fully visited. With linear probing, easy to
+	// establish when whole map is visited (great with high load factors) 
 
 	int num_visited = 0, new_location = hash_mod;
 	while(num_visited != hash_map->size)

@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <stdint.h>
 
 const static char * help = "Welcome to the C hash map demonstrator shell. "\
 	"This shell is designed to demonstrate the hash map structure written "\
